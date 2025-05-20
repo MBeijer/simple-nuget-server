@@ -6,7 +6,8 @@ class DB {
 	private static $isMysql;
 	private static $searchFilterParser;
 
-	public static function init() {
+	public static function init(): void
+	{
 		static::$conn = new PDO(
 			Config::$dbName,
 			Config::$dbUsername,

@@ -17,7 +17,8 @@ if (!function_exists("PhpPegJs\\chr_unicode")) {
 }
 /* ord_unicode - get unicode char code from string */
 if (!function_exists("PhpPegJs\\ord_unicode")) {
-    function ord_unicode($character) {
+    function ord_unicode($character): float|int
+		{
         if (strlen($character) === 1) {
             return ord($character);
         }
@@ -33,7 +34,8 @@ if (!function_exists("PhpPegJs\\ord_unicode")) {
 }
 /* peg_char_class_test - simple character class test */
 if (!function_exists("PhpPegJs\\peg_char_class_test")) {
-    function peg_char_class_test($class, $character) {
+    function peg_char_class_test($class, $character): bool
+		{
         $code = ord_unicode($character);
         foreach ($class as $range) {
             if ($code >= $range[0] && $code <= $range[1]) {
@@ -66,17 +68,18 @@ if (!class_exists("PhpPegJs\\SyntaxError", false)) {
 }
 
 class SearchFilterParser {
-    private $peg_currPos          = 0;
-    private $peg_reportedPos      = 0;
-    private $peg_cachedPos        = 0;
-    private $peg_cachedPosDetails = array('line' => 1, 'column' => 1, 'seenCR' => false );
-    private $peg_maxFailPos       = 0;
-    private $peg_maxFailExpected  = array();
-    private $peg_silentFails      = 0;
-    private $input                = array();
-    private $input_length         = 0;
+    private int $peg_currPos          = 0;
+    private int $peg_reportedPos      = 0;
+    private int $peg_cachedPos        = 0;
+    private array $peg_cachedPosDetails = array('line' => 1, 'column' => 1, 'seenCR' => false );
+    private int $peg_maxFailPos       = 0;
+    private array $peg_maxFailExpected  = array();
+    private int $peg_silentFails      = 0;
+    private array $input                = array();
+    private int $input_length         = 0;
 
-    private function cleanup_state() {
+    private function cleanup_state(): void
+		{
       $this->peg_currPos          = 0;
       $this->peg_reportedPos      = 0;
       $this->peg_cachedPos        = 0;
@@ -102,11 +105,13 @@ class SearchFilterParser {
     }
 
 
-    private function text() {
+    private function text(): string
+		{
       return substr($this->input, $this->peg_reportedPos, $this->peg_reportedPos + $this->peg_currPos);
     }
 
-    private function offset() {
+    private function offset(): int
+		{
       return $this->peg_reportedPos;
     }
 
@@ -120,7 +125,10 @@ class SearchFilterParser {
       return $compute_pd["column"];
     }
 
-    private function expected($description) {
+	/**
+	 * @throws SyntaxError
+	 */
+	private function expected($description) {
       throw $this->peg_buildException(
         null,
         array(array("type" => "other", "description" => $description )),
@@ -128,11 +136,15 @@ class SearchFilterParser {
       );
     }
 
-    private function error($message) {
+	/**
+	 * @throws SyntaxError
+	 */
+	private function error($message) {
       throw $this->peg_buildException($message, null, $this->peg_reportedPos);
     }
 
-    private function peg_advancePos(&$details, $startPos, $endPos) {
+    private function peg_advancePos(&$details, $startPos, $endPos): void
+		{
       for ($p = $startPos; $p < $endPos; $p++) {
         $ch = $this->input_substr($p, 1);
         if ($ch === "\n") {
@@ -150,7 +162,8 @@ class SearchFilterParser {
       }
     }
 
-    private function peg_computePosDetails($pos) {
+    private function peg_computePosDetails($pos): array
+		{
       if ($this->peg_cachedPos !== $pos) {
         if ($this->peg_cachedPos > $pos) {
           $this->peg_cachedPos = 0;
@@ -163,7 +176,8 @@ class SearchFilterParser {
       return $this->peg_cachedPosDetails;
     }
 
-    private function peg_fail($expected) {
+    private function peg_fail($expected): void
+		{
       if ($this->peg_currPos < $this->peg_maxFailPos) { return; }
 
       if ($this->peg_currPos > $this->peg_maxFailPos) {
@@ -174,7 +188,8 @@ class SearchFilterParser {
       $this->peg_maxFailExpected[] = $expected;
     }
 
-    private function peg_buildException_expectedComparator($a, $b) {
+    private function peg_buildException_expectedComparator($a, $b): int
+		{
       if ($a["description"] < $b["description"]) {
         return -1;
       } else if ($a["description"] > $b["description"]) {
@@ -184,7 +199,8 @@ class SearchFilterParser {
       }
     }
 
-    private function peg_buildException($message, $expected, $pos) {
+    private function peg_buildException($message, $expected, $pos): SyntaxError
+		{
       $posDetails = $this->peg_computePosDetails($pos);
       $found      = $pos < $this->input_length ? $this->input[$pos] : null;
 
@@ -254,15 +270,24 @@ class SearchFilterParser {
     private $peg_c22;
     private $peg_c23;
 
-    private function peg_f0() { return NULL; }
-    private function peg_f1($lhs, $rhs) { return $lhs . ' AND ' . $rhs; }
-    private function peg_f2($lhs, $rhs) { return $lhs . ' = ' . $rhs; }
-    private function peg_f3($expr) { return '(' . $expr . ')'; }
-    private function peg_f4($value) { return 'lower(' . $value . ')'; }
-    private function peg_f5() { return 'packages.PackageId'; }
-    private function peg_f6() { return 'versions.Version = packages.LatestVersion'; }
-    private function peg_f7($chars) { return '"' . implode($chars) . '"'; }
-    private function peg_f8($chars) { return "'" . implode($chars) . "'"; }
+    private function peg_f0(): null
+		{ return NULL; }
+    private function peg_f1($lhs, $rhs): string
+		{ return $lhs . ' AND ' . $rhs; }
+    private function peg_f2($lhs, $rhs): string
+		{ return $lhs . ' = ' . $rhs; }
+    private function peg_f3($expr): string
+		{ return '(' . $expr . ')'; }
+    private function peg_f4($value): string
+		{ return 'lower(' . $value . ')'; }
+    private function peg_f5(): string
+		{ return 'packages.PackageId'; }
+    private function peg_f6(): string
+		{ return 'versions.Version = packages.LatestVersion'; }
+    private function peg_f7($chars): string
+		{ return '"' . implode($chars) . '"'; }
+    private function peg_f8($chars): string
+		{ return "'" . implode($chars) . "'"; }
     private function peg_f9($char) { return $char; }
 
     private function peg_parseStart() {

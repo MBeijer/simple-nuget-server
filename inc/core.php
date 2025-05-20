@@ -1,13 +1,19 @@
 <?php
+
+use JetBrains\PhpStorm\NoReturn;
+
 require('config.php');
 require('db.php');
 
 // Convert all PHP errors to exceptions
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
+set_error_handler(/**
+ * @throws ErrorException
+ */ function($errno, $errstr, $errfile, $errline) {
 	throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
-function api_error($code, $message) {
+#[NoReturn] function api_error($code, $message): void
+{
 	header('Status: ' . $code . ' ' . $message);
 	header('Content-Type: text/plain');
 	echo htmlspecialchars($message);
@@ -23,7 +29,8 @@ $_GET = array_change_key_case($_GET, CASE_LOWER);
 /**
  * Ensures that the API key is valid.
  */
-function require_auth() {
+function require_auth(): void
+{
 	if (empty($_SERVER['HTTP_X_NUGET_APIKEY']) || $_SERVER['HTTP_X_NUGET_APIKEY'] != Config::$apiKey) {
 		api_error('403', 'Invalid API key');
 	}
@@ -42,22 +49,24 @@ function request_method() {
  * Gets the file path for the specified package version. Throws an exception if
  * the package version does not exist.
  */
-function get_package_path($id, $version) {
+function get_package_path($id, $version): string
+{
 	if (
 		!DB::validateIdAndVersion($id, $version)
 		// These should be caught by validateIdAndVersion, but better to be safe.
-		|| strpos($id, '/') !== false
-		|| strpos($version, '/') !== false
+		|| str_contains($id, '/')
+		|| str_contains($version, '/')
 	) {
 		api_error('404', 'Package version not found');
 	}
 
 	// This is safe - These values have been validated via validateIdAndVersion above
-	return '/packagefiles/' . $id . '/' . $version . '.nupkg';
+	return "/packagefiles/{$id}/{$version}.nupkg";
 }
 
 /* Used to construct URIs */
-function url_scheme() {
+function url_scheme(): string
+{
 	if ( (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
 		return 'https://';
 	} else {

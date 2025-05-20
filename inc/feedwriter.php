@@ -1,7 +1,8 @@
 <?php
 class FeedWriter {
-	private $feedID;
-	private $baseURL;
+	private string $feedID;
+	private string $baseURL;
+	private SimpleXMLElement|false $feed;
 
 	public function __construct($id) {
 		$this->feedID = $id;
@@ -11,7 +12,8 @@ class FeedWriter {
 			rtrim(dirname($_SERVER['REQUEST_URI']), '/') . '/';
 	}
 
-	public function write(array $results) {
+	public function write(array $results): bool|string
+	{
 		$this->beginFeed();
 		foreach ($results as $result) {
 			$this->addEntry($result);
@@ -19,12 +21,14 @@ class FeedWriter {
 		return $this->feed->asXML();
 	}
 
-	public function writeToOutput(array $results) {
+	public function writeToOutput(array $results): void
+	{
 		header('Content-Type: application/atom+xml; type=feed; charset=UTF-8');
 		echo $this->write($results);
 	}
 
-	private function beginFeed() {
+	private function beginFeed(): void
+	{
 		$this->feed = simplexml_load_string(
 			'<?xml version="1.0" encoding="utf-8" ?>
 			<feed
@@ -46,7 +50,8 @@ class FeedWriter {
 		]);
 	}
 
-	private function addEntry($row) {
+	private function addEntry($row): void
+	{
 		$entry_id = 'Packages(Id=\'' . $row['PackageId'] . '\',Version=\'' . $row['Version'] . '\')';
 		$entry = $this->feed->addChild('entry');
 		$entry->addChild('id', 'https://www.nuget.org/api/v2/' . $entry_id);
@@ -80,7 +85,8 @@ class FeedWriter {
 		$this->addEntryMeta($entry, $row);
 	}
 
-	private function addEntryMeta($entry, $row) {
+	private function addEntryMeta($entry, $row): void
+	{
 		$properties = $entry->addChild(
 			'properties',
 			null,
@@ -134,25 +140,29 @@ class FeedWriter {
 
 	}
 
-	private static function renderMetaDate($date) {
+	private static function renderMetaDate($date): array
+	{
 		return [
 			'value' => static::formatDate($date),
 			'type' => 'Edm.DateTime'
 		];
 	}
 
-	private static function renderMetaBoolean($value) {
+	private static function renderMetaBoolean($value): array
+	{
 		return [
 			'value' => $value ? 'true' : 'false',
 			'type' => 'Edm.Boolean'
 		];
 	}
 
-	private static function formatDate($date) {
+	private static function formatDate($date): string
+	{
 		return gmdate('Y-m-d\TH:i:s\Z', $date);
 	}
 
-	private function renderDependencies($raw) {
+	private function renderDependencies($raw): string
+	{
 		if (!$raw) {
 			return '';
 		}
@@ -189,18 +199,21 @@ class FeedWriter {
 	 * Formats a raw target framework from a NuSpec into the format used in the
 	 * packages feed (eg. "DNX4.5.1" -> "dnx451", "DNXCore5.0" -> "dnxcore50").
 	 */
-	private function formatTargetFramework($framework) {
+	private function formatTargetFramework($framework): string
+	{
 		return strtolower(preg_replace('/[^A-Z0-9]/i', '', $framework));
 	}
 
-	private function addWithAttribs($entry, $name, $value, $attributes) {
+	private function addWithAttribs($entry, $name, $value, $attributes): void
+	{
 		$node = $entry->addChild($name, $value);
 		foreach ($attributes as $attrib_name => $attrib_value) {
 			$node->addAttribute($attrib_name, $attrib_value);
 		}
 	}
 
-	private function addMeta($entry, $name, $value, $type = null) {
+	private function addMeta($entry, $name, $value, $type = null): void
+	{
 		$node = $entry->addChild(
 			$name,
 			$value,
